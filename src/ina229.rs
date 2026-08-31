@@ -185,6 +185,7 @@ enum Register {
     SUVL = 0x0D,
     BOVL = 0x0E,
     BUVL = 0x0F,
+    TOLT = 0x10,
     ManufacturerID = 0x3E,
     DeviceID = 0x3F,
 }
@@ -218,6 +219,7 @@ const POWER_SCALING_FACTOR: f64 = 3.2;
 const BUS_THRESHOLD_MV_PER_LSB: f64 = 3.125;
 const SHUNT_THRESHOLD_UV_PER_LSB_MODE_0: f64 = 5.0;
 const SHUNT_THRESHOLD_UV_PER_LSB_MODE_1: f64 = 1.25;
+const TEMPERATURE_THRESHOLD_MC_PER_LSB: f64 = TEMPERATURE_MC_PER_LSB;
 
 // Calibration constants
 const DENOMINATOR: f64 = (1 << 19) as f64; // From Datasheet, 2^19
@@ -574,6 +576,29 @@ where
         millivolts: f64,
     ) -> Result<(), Error<SPIError, CSError>> {
         self.set_bus_undervoltage_threshold_raw((millivolts / BUS_THRESHOLD_MV_PER_LSB) as u16)
+    }
+
+    /// Get the raw temperature over-limit threshold, from the TEMP_LIMIT register.
+    pub fn temperature_overlimit_threshold_raw(&mut self) -> Result<i16, Error<SPIError, CSError>> {
+        self.read_register_i16(Register::TOLT)
+    }
+
+    /// Set the raw temperature over-limit threshold, in the TEMP_LIMIT register.
+    pub fn set_temperature_overlimit_threshold_raw(
+        &mut self,
+        value: i16,
+    ) -> Result<(), Error<SPIError, CSError>> {
+        self.write_register_i16(Register::TOLT, value)
+    }
+
+    /// Set the temperature over-limit threshold in millidegrees Celsius.
+    pub fn set_temperature_overlimit_threshold_millidegrees_celsius(
+        &mut self,
+        millidegrees_celsius: f64,
+    ) -> Result<(), Error<SPIError, CSError>> {
+        self.set_temperature_overlimit_threshold_raw(
+            (millidegrees_celsius / TEMPERATURE_THRESHOLD_MC_PER_LSB) as i16,
+        )
     }
 
     /// Get the unique manufacturer identification number.
